@@ -1,39 +1,92 @@
 import { Heart, HeartPulseIcon, Soup } from 'lucide-react';
-import React from 'react';
+import React, { useState } from 'react';
 
-const RecipeCard = () => {
+const getTwoValuesFromArray = (arr) => {
+  return [arr[0], arr[1]];
+};
+
+const RecipeCard = ({ recipe, bg, badge }) => {
+  const healthLabels = getTwoValuesFromArray(recipe.healthLabels);
+  const [isFavorite, setIsFavorite] = useState(
+    localStorage.getItem('favorites')?.includes(recipe.label)
+  );
+
+  const addRecipeToFavorites = () => {
+    let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+    const isRecipeAlreadyInFavorites = favorites.some(
+      (fav) => fav.label === recipe.label
+    );
+
+    if (isRecipeAlreadyInFavorites) {
+      favorites = favorites.filter((fav) => fav.label !== recipe.label);
+      setIsFavorite(false);
+    } else {
+      favorites.push(recipe);
+      setIsFavorite(true);
+    }
+
+    localStorage.setItem('favorites', JSON.stringify(favorites));
+  };
   return (
-    <div className='flex flex-col rounded-md bg-[#ecf7d4] overflow-hidden p-3 relative'>
-      <a href='#' className='relative h-32'>
+    <div
+      className={`flex flex-col rounded-md ${bg} overflow-hidden p-3 relative`}
+    >
+      <a
+        href={`https://www.youtube.com/results?search_query=${recipe.label} recipe`}
+        target='_blank'
+        className='relative h-32'
+      >
+        <div className='skeleton absolute inset-0' />
         <img
-          src='/1.jpg'
+          src={recipe.image}
           alt='recipe 1'
-          className='rounded-md w-full h-full object-cover cursor-pointer'
+          className='rounded-md w-full h-full object-cover cursor-pointer opacity-0 transition-opacity duration-500'
+          onLoad={(e) => {
+            e.currentTarget.style.opacity = 1;
+            e.currentTarget.previousElementSibling.style.display = 'none';
+          }}
         />
         <div className='absolute bottom-2 left-2 bg-white rounded-full p-1 cursor-pointer flex items-center gap-1 text-sm'>
-          <Soup size={'16'} /> 4 Servings
+          <Soup size={'16'} />
+          <span>{recipe.yield} Servings</span>
         </div>
-        <div className='absolute top-1 right-2 bg-white p-1 cursor-pointer rounded-full'>
-          <Heart
-            size={'20'}
-            className='hover:fill-red-500 hover:text-red-500'
-          />
+        <div
+          className='absolute top-1 right-2 bg-white p-1 cursor-pointer rounded-full'
+          onClick={(e) => {
+            e.preventDefault();
+            addRecipeToFavorites();
+          }}
+        >
+          {!isFavorite && (
+            <Heart
+              size={'20'}
+              className='hover:fill-red-500 hover:text-red-500'
+            />
+          )}
+          {isFavorite && (
+            <Heart size={'20'} className='fill-red-500 text-red-500' />
+          )}
         </div>
       </a>
       <div className='flex flex-col p-1'>
         <p className='text-slate-800 font-semibold text-md tracking-wide'>
-          Rostisserie Chicken Recipe
+          {recipe.label}
         </p>
-        <p className='text-sm text-gray-500 mb-2'>Mexican Kitchen</p>
+        <p className='text-sm text-gray-500 mb-2'>
+          {recipe.cuisineType[0].charAt(0).toUpperCase() +
+            recipe.cuisineType[0].slice(1)}{' '}
+          Kitchen
+        </p>
         <div className='flex p-1 gap-2'>
-          <div className='flex rounded-lg gap-1 justify-center items-center bg-[#d6f497] p-1'>
-            <HeartPulseIcon size={'16'} color='gray' />
-            <span className='text-sm text-gray-500'>Sugar Conscious</span>
-          </div>
-          <div className='flex rounded-lg gap-1 justify-center items-center bg-[#d6f497] p-1'>
-            <HeartPulseIcon size={'16'} color='gray' />
-            <span className='text-sm text-gray-500'>Keto friendly</span>
-          </div>
+          {healthLabels.map((label, index) => (
+            <div
+              key={index}
+              className={`flex rounded-lg gap-1 justify-center ${badge} items-center  p-1`}
+            >
+              <HeartPulseIcon size={'16'} color='gray' />
+              <span className='text-sm text-gray-500'>{label}</span>
+            </div>
+          ))}
         </div>
       </div>
     </div>
